@@ -18,10 +18,10 @@ const cardSchema = new mongoose.Schema(
       ],
     },
     owner: {
-      type: mongoose.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Обязательное поле создателя карточки не заполнено'],
     },
-    likes: [{ type: mongoose.ObjectId, default: [null] }],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, default: [null] }],
     createdAt: { type: Date, default: Date.now },
   },
   { versionKey: false },

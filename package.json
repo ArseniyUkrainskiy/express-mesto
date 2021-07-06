@@ -4,7 +4,8 @@
   "description": "backend-express-mesto",
   "main": "app.js",
   "scripts": {
-    "lint": "node_modules/.bin/eslint --ext=.js ./",
+    "lint": "npx eslint .",
+    "lint--ext": "node_modules/.bin/eslint --ext=.js ./",
     "lint--fix": "node_modules/.bin/eslint --ext=.js ./ --fix",
     "start": "node app.js",
     "dev": "nodemon --inspect app.js"

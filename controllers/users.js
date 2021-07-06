@@ -23,14 +23,16 @@ module.exports.addUser = (req, res) => {
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.userId)
-    .then((user) => res.status(200).send(user))
-    .catch((err) => (err.name === 'CastError'
-      ? res.status(404).send({
-        message: 'Пользователь по указанному _id не найден.',
-      })
-      : res.status(500).send({
-        message: 'На сервере произошла ошибка.',
-      })));
+    .then((user) => {
+      if (user !== null) { res.status(200).send(user); } else {
+        res.status(404).send({
+          message: 'Пользователь с указанным _id не найден.',
+        });
+      }
+    })
+    .catch(() => res.status(500).send({
+      message: 'На сервере произошла ошибка.',
+    }));
 };
 
 module.exports.updateProfile = (req, res) => {
