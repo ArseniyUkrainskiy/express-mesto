@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema(
   {
     name: {
-      type: String, // имя — это строка
+      type: String,
       required: [
         true,
         'должно быть у каждого пользователя, так что имя — обязательное поле',
