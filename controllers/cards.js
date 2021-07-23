@@ -7,7 +7,7 @@ module.exports.getCards = (req, res) => {
 };
 
 module.exports.addCard = (req, res) => {
-  const { name, link, owner = req.user._id } = req.body;
+  const { name, link, owner = req.user.id } = req.body;
   Card.create({ name, link, owner })
     .then((card) => res.status(200).send({ card }))
     .catch((err) => (err.name === 'ValidationError'
@@ -26,6 +26,11 @@ module.exports.deleteCard = (req, res) => {
         return res.status(404).send({
           message: 'Карточка с указанным _id не найдена.',
         });
+      // eslint-disable-next-line eqeqeq
+      } if (card.owner != req.user.id) {
+        return res.status(403).send({
+          message: 'Нельзя удалить чужую карточку.',
+        });
       }
       return res.status(200).send({ card });
     })
@@ -41,7 +46,7 @@ module.exports.deleteCard = (req, res) => {
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
+    { $addToSet: { likes: req.user.id } },
     { new: true },
   )
     .then((card) => {
@@ -63,7 +68,7 @@ module.exports.likeCard = (req, res) => {
 module.exports.deleteLikeOnCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user._id } },
+    { $pull: { likes: req.user.id } },
     { new: true },
   )
     .then((card) => {

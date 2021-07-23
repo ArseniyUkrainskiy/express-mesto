@@ -1,7 +1,7 @@
 {
   "extends": "airbnb-base",
   "rules": {
-    "no-inline-comments":"warn",
+    "no-inline-comments":"off",
     "no-underscore-dangle": [
       "error",
       {

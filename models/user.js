@@ -1,31 +1,39 @@
 const mongoose = require('mongoose');
+const validator = require('validator'); // Для валидации воспользуйтесь модулем validator, npm i validator.
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [
-        true,
-        'должно быть у каждого пользователя, так что имя — обязательное поле',
-      ],
+      default: 'Жак-Ив Кусто',
       minlength: [2, 'минимальная длина имени — 2 символа'],
       maxlength: [30, 'максимальная длина 30 символов'],
     },
     about: {
       type: String,
-      required: [
-        true,
-        'должно быть у каждого пользователя, так что о себе — обязательное поле',
-      ],
+      default: 'Исследователь',
       minlength: [2, 'минимальная длина имени — 2 символа'],
       maxlength: [30, 'максимальная длина 30 символов'],
     },
     avatar: {
       type: String,
-      required: [
-        true,
-        'должно быть у каждого пользователя, так что аватар — обязательное поле',
-      ],
+      default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true, // email должен быть уникальным.
+      validate: { // опишем свойство validate.
+        validator(email) { // validator - функция проверки данных.
+          return validator.isEmail(email);
+        },
+        message: 'Недопустимый адрес email', // когда validator вернёт false, будет использовано это сообщение
+      },
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false,
     },
   },
   { versionKey: false },
