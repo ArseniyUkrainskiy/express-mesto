@@ -8,16 +8,20 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useFindAndModify: false,
   useUnifiedTopology: true,
 });
+const { errors } = require('celebrate');
+const errorHandler = require('./middlewares/errorHandler');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
-const errorHandler = require('./middlewares/errorHandler');
 
 const { PORT = 3000 } = process.env;
 
 app.use(bodyParser.json());
 app.use('/', usersRouter);
 app.use('/', cardsRouter);
+// обработчики ошибок
+app.use(errors()); // обработчик ошибок celebrate
 app.use(errorHandler); // Централизованная обработка ошибок
+
 app.listen(PORT, () => {
   console.log(`Приложение запущено на ${PORT} порту`);
 });

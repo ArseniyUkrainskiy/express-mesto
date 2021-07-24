@@ -12,6 +12,11 @@ const cardSchema = new mongoose.Schema(
     },
     link: {
       type: String,
+      validate: {
+        validator(link) {
+          return /^(https?:\/\/)(www\.)?\S{1,}\.\S{2,}(\/\S{1,})?/gm.test(link);
+        },
+      },
       required: [
         true,
         'должно быть у каждой карточки, так что ссылка — обязательное поле',

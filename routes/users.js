@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const { celebrate, Joi } = require('celebrate');
+
 const {
   getUsers,
   // getUser,
@@ -8,18 +10,42 @@ const {
   updateProfile,
   updateUserAvatar,
 } = require('../controllers/users');
+
 const auth = require('../middlewares/auth');
+
 // роуты, не требующие авторизации
-router.post('/signin', login);
-router.post('/signup', createUser);
+router.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().min(3),
+    password: Joi.string().required(),
+  }),
+}), login);
+
+router.post('/signup', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().min(3),
+    password: Joi.string().required(),
+  }).unknown(true),
+}), createUser);
 
 router.use(auth);
+
 // роуты, которым авторизация нужна (и далее в cards)
 router.get('/users', getUsers);
 // router.get('/users/:userId', getUser);
 router.get('/users/me', getCurrentUser); // роут для получения информации о пользователе
 
-router.patch('/users/me', updateProfile);
-router.patch('/users/me/avatar', updateUserAvatar);
+router.patch('/users/me', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+  }).unknown(true),
+}), updateProfile);
+
+router.patch('/users/me/avatar', celebrate({
+  body: Joi.object().keys({
+    avatar: Joi.string().min(2).max(30),
+  }),
+}), updateUserAvatar);
 
 module.exports = router;

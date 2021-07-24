@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+      validate: {
+        validator(avatar) {
+          return /^(https?:\/\/)(www\.)?\S{1,}\.\S{2,}(\/\S{1,})?/gm.test(avatar);
+        },
+        message: 'Недопустимый адрес картинки для аватара',
+      },
     },
     email: {
       type: String,
@@ -27,7 +33,6 @@ const userSchema = new mongoose.Schema(
         validator(email) { // validator - функция проверки данных.
           return validator.isEmail(email);
         },
-        message: 'Недопустимый адрес email', // когда validator вернёт false, будет использовано это сообщение
       },
     },
     password: {

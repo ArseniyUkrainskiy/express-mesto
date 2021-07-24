@@ -115,7 +115,9 @@ module.exports.createUser = (req, res, next) => {
             name, about, avatar, email, password: hash, // +записываем хеш в базу
           })
             .then(({ _id }) => res.send({ _id, email }))
-            .catch(next);
+            .catch(() => {
+              next(new BadRequest400('Недопустимый адрес email'));
+            });
         });
     })
     .catch(next);
