@@ -1,16 +1,18 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Для создания токенов
 const User = require('../models/user');
+const BadRequest400 = require('../errors/badRequest400');
+const Unauthorized401 = require('../errors/unauthorized401');
+const NotFound404 = require('../errors/notFound404');
+const Conflict409 = require('../errors/conflict409');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(200).send(users))
-    .catch(() => res.status(500).send({
-      message: 'На сервере произошла ошибка.',
-    }));
+    .then((users) => res.send(users))
+    .catch(next);
 };
 
-module.exports.updateProfile = (req, res) => {
+module.exports.updateProfile = (req, res, next) => {
   const { name = 'Жак-Ив Кусто', about = 'Исследователь' } = req.body;
   User.findByIdAndUpdate(
     req.user.id,
@@ -22,30 +24,22 @@ module.exports.updateProfile = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(404).send({
-          message: 'Пользователь по указанному _id не найден.',
-        });
+        throw new NotFound404('Пользователь по указанному _id не найден.');
       }
-      return res.status(200).send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({
-          message: `Переданы некорректные данные при обновлении профиля.${err.message}`,
-        });
+        next(new BadRequest400('Переданы некорректные данные при обновлении профиля.'));
       } else if (err.name === 'CastError') {
-        res.status(400).send({
-          message: 'Был передан невалидный идентификатор _id.',
-        });
+        next(new BadRequest400('Был передан невалидный идентификатор _id.'));
       } else {
-        res.status(500).send({
-          message: 'На сервере произошла ошибка.',
-        });
+        next(err);
       }
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png' } = req.body;
   User.findByIdAndUpdate(
     req.user.id,
@@ -57,53 +51,38 @@ module.exports.updateUserAvatar = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(404).send({
-          message: 'Пользователь по указанному _id не найден.',
-        });
+        throw new NotFound404('Пользователь по указанному _id не найден.');
       }
-      return res.status(200).send(user);
+      return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({
-          message: 'Переданы некорректные данные при обновлении аватара.',
-        });
+        next(new BadRequest400('Переданы некорректные данные при обновлении аватара пользователя.'));
       } else if (err.name === 'CastError') {
-        res.status(400).send({
-          message: 'Был передан невалидный идентификатор _id.',
-        });
+        next(new BadRequest400('Был передан невалидный идентификатор _id.'));
       } else {
-        res.status(500).send({
-          message: 'На сервере произошла ошибка.',
-        });
+        next(err);
       }
     });
 };
 // контроллер аутентификации
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send({ message: 'Email или пароль отсутствует.' });
+    next(new BadRequest400('Email или пароль отсутствует.'));
   }
   // Проверим, есть ли пользователь в базе
   return User.findOne({ email }).select('+password')
-    .orFail(() => res.status(404).send({
-      message: 'Пользователь с таким Email не найден',
-    }))
+    .orFail(() => {
+      throw new NotFound404('Пользователь по указанному Email не найден.');
+    })
     .then((user) => {
-      if (!user) {
-        return res.status(401).send({
-          message: 'Пользователь с таким Email уже существует',
-        });
-      }
       // пользователь найден
       // проверка пароля
-      return bcrypt.compare(password, user.password)
+      bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return res.status(401).send({
-              message: 'Email или пароль некорректный.',
-            });
+            throw new Unauthorized401('Email или пароль некорректный.');
           }
           // метод jwt.sign, чтобы создать токен
           const token = jwt.sign({
@@ -111,27 +90,23 @@ module.exports.login = (req, res) => {
           }, 'SECRET-KEY', { expiresIn: '7d' });
           return res.send({ token });
         })
-        .catch(() => res.status(500).send({
-          message: 'На сервере произошла ошибка.',
-        }));
+        .catch(next);
     })
-    .catch(() => res.status(500).send({
-      message: 'На сервере произошла ошибка.',
-    }));
+    .catch(next);
 };
 
 // Регистрация нового пользователя
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body; // Данные всех полей - в теле запроса.
   if (!email || !password) {
-    return res.status(400).send({ message: 'Email или пароль отсутствует.' });
+    throw new BadRequest400('Email или пароль отсутствует.');
   }
   return User.findOne({ email })
     .then((user) => {
       if (user) {
-        return res.status(409).send({ message: 'Пользователь с таким Email уже есть в системе.' });
+        throw new Conflict409('Пользователь с таким Email уже зарегистрирован.');
       }
       // Хеширование пароля
       return bcrypt.hash(password, 10)
@@ -139,28 +114,19 @@ module.exports.createUser = (req, res) => {
           User.create({
             name, about, avatar, email, password: hash, // +записываем хеш в базу
           })
-            .then(({ _id }) => res.status(200).send({ _id, email }))
-            .catch((err) => {
-              if (err.message) {
-                return res.send(err.message);
-              }
-              return res.status(500).send({
-                message: 'На сервере произошла ошибка.',
-              });
-            });
+            .then(({ _id }) => res.send({ _id, email }))
+            .catch(next);
         });
     })
-    .catch(() => res.status(500).send({
-      message: 'На сервере произошла ошибка.',
-    }));
+    .catch(next);
 };
 
 // контроллер для получения информации о пользователе
-module.exports.getCurrentUser = async (req, res) => {
+module.exports.getCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     res.send(user);
   } catch (e) {
-    res.send({ message: 'Пользователь не найден' });
+    next(new NotFound404('Пользователь не найден'));
   }
 };
