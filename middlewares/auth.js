@@ -2,6 +2,7 @@
 // middlewares/auth.js
 const jwt = require('jsonwebtoken');
 const Unauthorized401 = require('../errors/unauthorized401');
+const { JWT_SECRET = 'secret-dev-key' } = process.env;
 
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
@@ -13,7 +14,7 @@ module.exports = (req, res, next) => {
   let payload;
 
   try {
-    payload = jwt.verify(token, 'SECRET-KEY');
+    payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
     next(new Unauthorized401('Необходима авторизация под своей учетной записью'));
   }

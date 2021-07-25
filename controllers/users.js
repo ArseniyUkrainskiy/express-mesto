@@ -5,6 +5,7 @@ const BadRequest400 = require('../errors/badRequest400');
 const Unauthorized401 = require('../errors/unauthorized401');
 const NotFound404 = require('../errors/notFound404');
 const Conflict409 = require('../errors/conflict409');
+const { JWT_SECRET = 'secret-dev-key' } = process.env;
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -87,7 +88,7 @@ module.exports.login = (req, res, next) => {
           // метод jwt.sign, чтобы создать токен
           const token = jwt.sign({
             id: user._id,
-          }, 'SECRET-KEY', { expiresIn: '7d' });
+          }, JWT_SECRET, { expiresIn: '7d' });
           return res.send({ token });
         })
         .catch(next);

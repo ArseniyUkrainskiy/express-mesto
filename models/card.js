@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const expLink = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gm;
 const cardSchema = new mongoose.Schema(
   {
     name: {
@@ -14,7 +15,7 @@ const cardSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator(link) {
-          return /^(https?:\/\/)(www\.)?\S{1,}\.\S{2,}(\/\S{1,})?/gm.test(link);
+          return expLink.test(link);
         },
       },
       required: [

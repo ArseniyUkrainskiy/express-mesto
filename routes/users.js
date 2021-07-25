@@ -1,6 +1,15 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 
+const validator = require('validator');
+const validationMethod = (data) => {
+  const expLink = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gm;
+  if (validator.isURL(data) && expLink.test(data)) {
+    return data;
+  }
+  throw new Error('URL для аватара введен неправильно');
+};
+
 const {
   getUsers,
   // getUser,
@@ -44,7 +53,7 @@ router.patch('/users/me', celebrate({
 
 router.patch('/users/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().min(2).max(30),
+    avatar: Joi.string().min(2).max(30).custom(validationMethod),
   }),
 }), updateUserAvatar);
 

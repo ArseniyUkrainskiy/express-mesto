@@ -18,7 +18,7 @@ module.exports.addCard = (req, res, next) => {
       : next(err)));
 };
 
-module.exports.deleteCard = (req, res, next) => {
+/* module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
@@ -30,6 +30,24 @@ module.exports.deleteCard = (req, res, next) => {
         throw new Forbidden403('Нельзя удалить чужую карточку.');
       }
       return res.send({ card });
+    })
+    .catch((err) => (err.name === 'CastError'
+      ? next(new BadRequest400('Был передан невалидный идентификатор _id.'))
+      : next(err)));
+}; */
+
+module.exports.deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (!card) {
+        throw new NotFound404('Карточка с указанным _id не найдена.');
+      } else if (card.owner.toString() === req.user.id) {
+        // карточка найдена
+        // проверим кто создал, строгое сравнение и по типу данных
+        Card.findByIdAndDelete(req.params.cardId)
+          .then(() => res.send({ card }))
+          .catch(next);
+      } else throw new Forbidden403('Нельзя удалить чужую карточку.');
     })
     .catch((err) => (err.name === 'CastError'
       ? next(new BadRequest400('Был передан невалидный идентификатор _id.'))
