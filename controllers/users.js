@@ -75,7 +75,7 @@ module.exports.login = (req, res, next) => {
   // Проверим, есть ли пользователь в базе
   return User.findOne({ email }).select('+password')
     .orFail(() => {
-      throw new NotFound404('Пользователь по указанному Email не найден.');
+      throw new Unauthorized401('Email или пароль некорректный.');
     })
     .then((user) => {
       // пользователь найден
